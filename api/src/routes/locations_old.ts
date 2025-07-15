@@ -37,7 +37,7 @@ const validateLocationId = [
 ];
 
 // Get user's locations with optional filtering
-router.get('/', authenticateToken, (req: AuthRequest, res: Response): void => {
+router.get('/', authenticateToken, (req: AuthRequest, res: Response) => {
   try {
     const { limit = '50', offset = '0', startDate, endDate } = req.query;
     
@@ -125,17 +125,16 @@ router.post('/', authenticateToken, validateLocation, (req: AuthRequest, res: Re
 });
 
 // Get specific location
-router.get('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res: Response): void => {
+router.get('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res: Response) => {
   try {
     // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors.array()
       });
-      return;
     }
 
     const location = locations.find(loc => 
@@ -143,11 +142,10 @@ router.get('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res
     );
 
     if (!location) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         error: 'Location not found'
       });
-      return;
     }
 
     res.json({
@@ -166,17 +164,16 @@ router.get('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res
 });
 
 // Update location
-router.put('/:id', authenticateToken, validateLocationId, validateLocation, (req: AuthRequest, res: Response): void => {
+router.put('/:id', authenticateToken, validateLocationId, validateLocation, (req: AuthRequest, res: Response) => {
   try {
     // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors.array()
       });
-      return;
     }
 
     const locationIndex = locations.findIndex(loc => 
@@ -184,11 +181,10 @@ router.put('/:id', authenticateToken, validateLocationId, validateLocation, (req
     );
 
     if (locationIndex === -1) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         error: 'Location not found'
       });
-      return;
     }
 
     const { latitude, longitude, accuracy, address }: LocationInput = req.body;
@@ -218,17 +214,16 @@ router.put('/:id', authenticateToken, validateLocationId, validateLocation, (req
 });
 
 // Delete location
-router.delete('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res: Response): void => {
+router.delete('/:id', authenticateToken, validateLocationId, (req: AuthRequest, res: Response) => {
   try {
     // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors.array()
       });
-      return;
     }
 
     const locationIndex = locations.findIndex(loc => 
@@ -236,11 +231,10 @@ router.delete('/:id', authenticateToken, validateLocationId, (req: AuthRequest, 
     );
 
     if (locationIndex === -1) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         error: 'Location not found'
       });
-      return;
     }
 
     const deletedLocation = locations.splice(locationIndex, 1)[0];

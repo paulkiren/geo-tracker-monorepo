@@ -39,16 +39,17 @@ const validateLogin = [
 ];
 
 // Registration endpoint
-router.post('/register', validateRegistration, async (req: Request, res: Response) => {
+router.post('/register', validateRegistration, async (req: Request, res: Response): Promise<void> => {
   try {
     // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors.array()
       });
+      return;
     }
 
     const { username, email, password }: UserRegistration = req.body;
@@ -56,10 +57,11 @@ router.post('/register', validateRegistration, async (req: Request, res: Respons
     // Check if user already exists
     const existingUser = users.find(u => u.email === email || u.username === username);
     if (existingUser) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: existingUser.email === email ? 'Email already exists' : 'Username already exists'
       });
+      return;
     }
 
     // Hash password
@@ -107,16 +109,17 @@ router.post('/register', validateRegistration, async (req: Request, res: Respons
 });
 
 // Login endpoint
-router.post('/login', validateLogin, async (req: Request, res: Response) => {
+router.post('/login', validateLogin, async (req: Request, res: Response): Promise<void> => {
   try {
     // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors.array()
       });
+      return;
     }
 
     const { email, password }: UserLogin = req.body;
@@ -124,19 +127,21 @@ router.post('/login', validateLogin, async (req: Request, res: Response) => {
     // Find user
     const user = users.find(u => u.email === email);
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials'
       });
+      return;
     }
 
     // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials'
       });
+      return;
     }
 
     // Generate token
@@ -169,14 +174,15 @@ router.post('/login', validateLogin, async (req: Request, res: Response) => {
 });
 
 // Get current user profile
-router.get('/profile', authenticateToken, (req: AuthRequest, res: Response) => {
+router.get('/profile', authenticateToken, (req: AuthRequest, res: Response): void => {
   try {
     const user = users.find(u => u.id === req.user?.userId);
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'User not found'
       });
+      return;
     }
 
     res.json({
@@ -200,13 +206,14 @@ router.get('/profile', authenticateToken, (req: AuthRequest, res: Response) => {
 });
 
 // Token refresh endpoint
-router.post('/refresh', authenticateToken, (req: AuthRequest, res: Response) => {
+router.post('/refresh', authenticateToken, (req: AuthRequest, res: Response): void => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'User not authenticated'
       });
+      return;
     }
 
     // Generate new token
@@ -233,7 +240,7 @@ router.post('/refresh', authenticateToken, (req: AuthRequest, res: Response) => 
 });
 
 // Logout endpoint (client-side implementation)
-router.post('/logout', authenticateToken, (req: AuthRequest, res: Response) => {
+router.post('/logout', authenticateToken, (req: AuthRequest, res: Response): void => {
   // In a real implementation, you might want to blacklist the token
   // For now, we'll just return a success message
   res.json({
