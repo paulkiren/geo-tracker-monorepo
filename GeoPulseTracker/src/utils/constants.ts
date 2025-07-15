@@ -1,6 +1,32 @@
+import { Platform } from 'react-native';
+
+const getBaseUrl = () => {
+  if (!__DEV__) {
+    return 'http://localhost:3000/api'; // Production URL
+  }
+  
+  // Your laptop's IP address
+  const LAPTOP_IP = '192.168.1.9';
+  
+  if (Platform.OS === 'android') {
+    // For Android emulator: use 10.0.2.2
+    // For physical Android device: use laptop IP
+    // You can manually switch this based on your setup
+    const USE_EMULATOR = false; // Set to true if using Android emulator
+    
+    return USE_EMULATOR 
+      ? 'http://10.0.2.2:3000/api'  // Android emulator
+      : `http://${LAPTOP_IP}:3000/api`; // Physical device
+  } else if (Platform.OS === 'ios') {
+    return 'http://localhost:3000/api'; // iOS simulator
+  }
+  
+  return 'http://localhost:3000/api'; // Default fallback
+};
+
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: __DEV__ ? 'http://localhost:3000/api' : 'https://your-production-api.com/api',
+  BASE_URL: getBaseUrl(),
   TIMEOUT: 10000, // 10 seconds
 };
 

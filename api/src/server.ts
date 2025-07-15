@@ -22,7 +22,12 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:19006'],
+  origin: process.env.CORS_ORIGIN?.split(',') || [
+    'http://localhost:3000', 
+    'http://localhost:19006',
+    'http://192.168.1.9:3000',  // Your laptop IP
+    'http://10.0.2.2:3000'      // Android emulator
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -98,11 +103,14 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 GeoPulse Location Tracker API is running on port ${PORT}`);
+const portNumber = parseInt(PORT.toString(), 10);
+app.listen(portNumber, '0.0.0.0', () => {
+  console.log(`🚀 GeoPulse Location Tracker API is running on port ${portNumber}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}${API_PREFIX}`);
-  console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
+  console.log(`🔗 API Base URL: http://0.0.0.0:${portNumber}${API_PREFIX}`);
+  console.log(`🔗 Local Access: http://localhost:${portNumber}${API_PREFIX}`);
+  console.log(`🔗 Network Access: http://192.168.1.9:${portNumber}${API_PREFIX}`);
+  console.log(`❤️  Health Check: http://localhost:${portNumber}/health`);
 });
 
 export default app;

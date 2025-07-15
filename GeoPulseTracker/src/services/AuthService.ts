@@ -46,6 +46,8 @@ class AuthService {
       return data;
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Network error:', error?.message);
+        // Return a generic error response
       return {
         success: false,
         error: 'Network error. Please check your connection.',
