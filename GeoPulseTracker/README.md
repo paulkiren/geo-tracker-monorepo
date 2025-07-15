@@ -1,4 +1,28 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# GeoPulse Tracker - React Native App
+
+A React Native application for location tracking and management, designed to work with the GeoPulse API backend.
+
+## Features
+
+- **User Authentication**: Login and registration with JWT token-based authentication
+- **Secure Storage**: Automatic token management and secure local storage
+- **Modern UI**: Clean, responsive design with custom components
+- **Form Validation**: Client-side validation with user-friendly error messages
+- **Context Management**: Global state management for authentication
+
+## Architecture
+
+### Components
+- **LoginScreen**: Handles user authentication (login/register)
+- **HomeScreen**: Main dashboard after successful authentication
+- **CustomInput**: Reusable input component with validation support
+- **CustomButton**: Styled button component with loading states
+
+### Services
+- **AuthService**: Handles all authentication-related API calls and token management
+
+### Context
+- **AuthContext**: Global authentication state management
 
 # Getting Started
 
