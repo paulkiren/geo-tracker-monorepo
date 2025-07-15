@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { AuthRequest } from '../types';
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader?.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
+    res.status(401).json({ error: 'Access token required' });
+    return;
   }
 
   try {
@@ -15,13 +16,14 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    console.error('Token validation failed:', error);
+    res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
 
-export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader?.split(' ')[1];
 
   if (token) {
     try {
@@ -29,6 +31,7 @@ export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction
       req.user = decoded;
     } catch (error) {
       // Token is invalid but we continue without authentication
+      console.error('Token validation failed:', error);
     }
   }
   next();
