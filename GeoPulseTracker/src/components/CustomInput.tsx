@@ -7,20 +7,17 @@ import {
   StyleSheet,
   TextInputProps,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface CustomInputProps extends TextInputProps {
   label: string;
   error?: string;
   isPassword?: boolean;
-  leftIcon?: string;
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
   label,
   error,
   isPassword = false,
-  leftIcon,
   style,
   ...props
 }) => {
@@ -39,14 +36,6 @@ const CustomInput: React.FC<CustomInputProps> = ({
         isFocused && styles.inputContainerFocused,
         error && styles.inputContainerError,
       ]}>
-        {leftIcon && (
-          <Icon
-            name={leftIcon}
-            size={20}
-            color={isFocused ? '#2196F3' : '#757575'}
-            style={styles.leftIcon}
-          />
-        )}
         <TextInput
           style={[styles.input, style]}
           secureTextEntry={isPassword && !isPasswordVisible}
@@ -60,11 +49,9 @@ const CustomInput: React.FC<CustomInputProps> = ({
             onPress={togglePasswordVisibility}
             style={styles.eyeIcon}
           >
-            <Icon
-              name={isPasswordVisible ? 'visibility-off' : 'visibility'}
-              size={20}
-              color="#757575"
-            />
+            <Text style={styles.eyeText}>
+              {isPasswordVisible ? '🙈' : '👁️'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -111,6 +98,9 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
+  },
+  eyeText: {
+    fontSize: 16,
   },
   errorText: {
     fontSize: 12,

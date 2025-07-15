@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginCredentials, RegisterCredentials, AuthResponse, User } from '../types/auth';
-
-const API_BASE_URL = 'http://localhost:3000/api'; // Change this to your actual API URL
+import { API_CONFIG, API_ENDPOINTS, STORAGE_KEYS } from '../utils/constants';
 
 class AuthService {
   private static instance: AuthService;
@@ -19,7 +18,7 @@ class AuthService {
   // Initialize the service by loading stored token
   async initialize(): Promise<void> {
     try {
-      this.token = await AsyncStorage.getItem('authToken');
+      this.token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     } catch (error) {
       console.error('Error loading auth token:', error);
     }
@@ -28,7 +27,7 @@ class AuthService {
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,8 +39,8 @@ class AuthService {
 
       if (data.success && data.data?.token) {
         this.token = data.data.token;
-        await AsyncStorage.setItem('authToken', this.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, this.token);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.data.user));
       }
 
       return data;
@@ -57,7 +56,7 @@ class AuthService {
   // Register user
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.REGISTER}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,8 +68,8 @@ class AuthService {
 
       if (data.success && data.data?.token) {
         this.token = data.data.token;
-        await AsyncStorage.setItem('authToken', this.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, this.token);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.data.user));
       }
 
       return data;
@@ -87,8 +86,8 @@ class AuthService {
   async logout(): Promise<void> {
     try {
       this.token = null;
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -97,7 +96,7 @@ class AuthService {
   // Get current user from storage
   async getCurrentUser(): Promise<User | null> {
     try {
-      const userString = await AsyncStorage.getItem('user');
+      const userString = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
       return userString ? JSON.parse(userString) : null;
     } catch (error) {
       console.error('Error getting current user:', error);
@@ -133,7 +132,7 @@ class AuthService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<Response> {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_CONFIG.BASE_URL}${endpoint}`;
     
     return fetch(url, {
       ...options,
