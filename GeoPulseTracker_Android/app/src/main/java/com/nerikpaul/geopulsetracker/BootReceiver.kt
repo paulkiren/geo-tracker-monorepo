@@ -17,10 +17,9 @@ class BootReceiver : BroadcastReceiver() {
             context?.let {
                 val serviceIntent = Intent(it, LocationTrackingService::class.java).apply {
                     action = LocationTrackingService.ACTION_START_FOREGROUND_SERVICE
-                    // You might want to persist the interval or use a default
-                    putExtra(LocationTrackingService.EXTRA_INTERVAL, 25000L)
+                    // Use a default or persisted interval for API calls
+                    putExtra(LocationTrackingService.EXTRA_API_CALL_INTERVAL, 25000L) // Default to 25 seconds
                 }
-                // For Android O (API 26) and above, use startForegroundService()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     ContextCompat.startForegroundService(it, serviceIntent)
                 } else {

@@ -24,8 +24,16 @@ class LocationTrackingService : Service() {
 
     private val TAG = "LocationTrackingService"
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    // We will still use LocationCallback for continuous updates if needed,
+    // but the API call will be triggered by the Timer.
     private lateinit var locationCallback: LocationCallback
-    private var locationRequestInterval = 25000L // Default to 25 seconds (25000 milliseconds)
+
+    private var apiCallInterval = 25000L // Default API call interval
+    private var locationRequestInterval = 10000L // Location updates can be more frequent or less frequent than API calls
+                                                // We'll set it to a reasonable value to ensure we get updates.
+
+    private var apiCallTimer: Timer? = null
+    private var lastKnownLocation: Location? = null // Store the last received location
     private var apiCallJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -34,7 +42,7 @@ class LocationTrackingService : Service() {
         const val NOTIFICATION_ID = 123
         const val ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE"
         const val ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE"
-        const val EXTRA_INTERVAL = "extra_interval"
+        const val EXTRA_API_CALL_INTERVAL = "extra_api_call_interval" // New extra for API call interval
     }
 
     override fun onCreate() {
@@ -49,18 +57,18 @@ class LocationTrackingService : Service() {
 
         when (intent?.action) {
             ACTION_START_FOREGROUND_SERVICE -> {
-                intent.getLongExtra(EXTRA_INTERVAL, 25000L).let {
-                    locationRequestInterval = it
-                    Log.d(TAG, "Location update interval set to: $locationRequestInterval ms")
+                intent.getLongExtra(EXTRA_API_CALL_INTERVAL, 25000L).let {
+                    apiCallInterval = it
+                    Log.d(TAG, "API call interval set to: $apiCallInterval ms")
                 }
                 startForegroundService()
-                startLocationUpdates()
+                startLocationUpdates() // Keep receiving location updates
+                startApiCallScheduler() // Start the timer for API calls
             }
             ACTION_STOP_FOREGROUND_SERVICE -> {
                 stopSelf()
             }
         }
-        // If the system kills the service, it will try to recreate it
         return START_STICKY
     }
 
@@ -69,7 +77,7 @@ class LocationTrackingService : Service() {
             val serviceChannel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
                 "Location Tracking Service Channel",
-                NotificationManager.IMPORTANCE_LOW // Use IMPORTANCE_LOW for less obtrusive notification
+                NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(serviceChannel)
@@ -80,9 +88,9 @@ class LocationTrackingService : Service() {
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Location Tracker")
             .setContentText("Tracking your location in the background.")
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation) // Or your app's icon
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Matches IMPORTANCE_LOW
-            .setOngoing(true) // Makes the notification non-dismissible
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
@@ -90,18 +98,17 @@ class LocationTrackingService : Service() {
     }
 
     private fun startLocationUpdates() {
-        val locationRequest = LocationRequest.Builder(locationRequestInterval)
+        val locationRequest = LocationRequest.Builder(locationRequestInterval) // Location updates can be more frequent
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setMinUpdateIntervalMillis(locationRequestInterval / 2) // Optional: minimum interval between updates
-            .setMaxUpdateDelayMillis(locationRequestInterval + 5000L) // Optional: max delay before getting an update
+            .setMinUpdateIntervalMillis(locationRequestInterval / 2)
+            .setMaxUpdateDelayMillis(locationRequestInterval + 5000L)
             .build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    Log.d(TAG, "Location received: ${location.latitude}, ${location.longitude}")
-                    // Call your API here
-                    callApiWithLocation(location)
+                    Log.d(TAG, "Location received and updated: ${location.latitude}, ${location.longitude}")
+                    lastKnownLocation = location // Store the latest location
                 } ?: run {
                     Log.w(TAG, "Location result is null.")
                 }
@@ -110,22 +117,21 @@ class LocationTrackingService : Service() {
             override fun onLocationAvailability(p0: LocationAvailability) {
                 if (!p0.isLocationAvailable) {
                     Log.e(TAG, "Location is not available.")
-                    // Optionally, inform the user or try to enable location services
                 }
             }
         }
 
-        // Check for permissions at runtime before requesting updates
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
-                Looper.getMainLooper() // Use main looper or a dedicated background looper
+                Looper.getMainLooper()
             )
             Log.d(TAG, "Location updates requested.")
         } else {
             Log.e(TAG, "Location permission not granted. Cannot start location updates.")
-            // Handle the case where permission is not granted, e.g., stop the service or inform the user.
+            // Decide if you want to stop the service here or just continue without location
+            // For this scenario, we assume location is critical, so stopping might be reasonable.
             stopSelf()
         }
     }
@@ -135,9 +141,56 @@ class LocationTrackingService : Service() {
         Log.d(TAG, "Location updates stopped.")
     }
 
+    private fun startApiCallScheduler() {
+        apiCallTimer?.cancel() // Cancel any existing timer
+        apiCallTimer = Timer()
+        apiCallTimer?.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                Log.d(TAG, "Scheduled API call triggered.")
+                // Attempt to get the latest location before making the API call
+                if (ContextCompat.checkSelfPermission(this@LocationTrackingService, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        if (location != null) {
+                            lastKnownLocation = location
+                            Log.d(TAG, "Last known location retrieved for API call: ${location.latitude}, ${location.longitude}")
+                            callApiWithLocation(location)
+                        } else {
+                            Log.w(TAG, "Last known location is null. Trying last stored location or fetching current location.")
+                            // If lastKnownLocation is null, try to use the previously stored one
+                            lastKnownLocation?.let {
+                                Log.d(TAG, "Using previously stored location for API call: ${it.latitude}, ${it.longitude}")
+                                callApiWithLocation(it)
+                            } ?: run {
+                                Log.e(TAG, "No location available for API call.")
+                                // Optionally, request a fresh location here if absolutely necessary
+                                // Note: requesting fresh location might block the timer thread if not handled asynchronously
+                            }
+                        }
+                    }.addOnFailureListener { e ->
+                        Log.e(TAG, "Failed to get last known location: ${e.message}", e)
+                        lastKnownLocation?.let {
+                            Log.d(TAG, "Using previously stored location due to last known location failure: ${it.latitude}, ${it.longitude}")
+                            callApiWithLocation(it)
+                        } ?: run {
+                            Log.e(TAG, "No location available for API call after failure.")
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Location permission not granted for scheduled API call.")
+                    // This case should ideally not happen if startLocationUpdates already checked
+                }
+            }
+        }, 0, apiCallInterval) // Start immediately, repeat every apiCallInterval
+        Log.d(TAG, "API call scheduler started with interval: $apiCallInterval ms")
+    }
+
+    private fun stopApiCallScheduler() {
+        apiCallTimer?.cancel()
+        apiCallTimer = null
+        Log.d(TAG, "API call scheduler stopped.")
+    }
+
     private fun callApiWithLocation(location: Location) {
-        // Implement your API call logic here
-        // This should be done on a background thread (e.g., using Coroutines, Retrofit, OkHttp)
         apiCallJob?.cancel() // Cancel any previous pending API call if necessary
 
         apiCallJob = serviceScope.launch {
@@ -146,8 +199,7 @@ class LocationTrackingService : Service() {
                 // Simulate network delay
                 delay(1000)
 
-                // Replace this with your actual API call using Retrofit, OkHttp, etc.
-                // Example using a placeholder:
+                // TODO: Replace this with your actual API call using Retrofit, OkHttp, etc.
                 // val response = YourApiClient.apiService.sendLocation(location.latitude, location.longitude)
                 // if (response.isSuccessful) {
                 //     Log.d(TAG, "API call successful: ${response.body()}")
@@ -164,14 +216,15 @@ class LocationTrackingService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null // This service is not designed for binding
+        return null
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service onDestroy")
         stopLocationUpdates()
+        stopApiCallScheduler()
         apiCallJob?.cancel()
-        serviceScope.cancel() // Cancel all coroutines launched in serviceScope
+        serviceScope.cancel()
     }
 }

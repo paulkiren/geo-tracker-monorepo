@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
-    // For requesting multiple permissions at once
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -28,12 +27,13 @@ class MainActivity : AppCompatActivity() {
         val backgroundLocationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             permissions[Manifest.permission.ACCESS_BACKGROUND_LOCATION] ?: false
         } else {
-            true // Not applicable for older Android versions
+            true
         }
 
         if (fineLocationGranted && backgroundLocationGranted) {
             Log.d(TAG, "All required location permissions granted.")
-            startLocationService(25000L) // Start service with 25-second interval
+            // Pass the desired interval (e.g., 25 seconds)
+            startLocationService(25000L) // Or 40000L for 40 seconds
         } else {
             Log.w(TAG, "Not all location permissions granted. Fine: $fineLocationGranted, Background: $backgroundLocationGranted")
             showLocationPermissionRationale()
@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         if (allPermissionsGranted) {
             Log.d(TAG, "Permissions already granted, starting service.")
-            startLocationService(25000L) // Start service with 25-second interval
+            startLocationService(25000L) // Or 40000L
         } else {
             Log.d(TAG, "Requesting location permissions.")
             requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
@@ -96,15 +96,15 @@ class MainActivity : AppCompatActivity() {
     private fun startLocationService(interval: Long) {
         val serviceIntent = Intent(this, LocationTrackingService::class.java).apply {
             action = LocationTrackingService.ACTION_START_FOREGROUND_SERVICE
-            putExtra(LocationTrackingService.EXTRA_INTERVAL, interval)
+            // Pass the API call interval
+            putExtra(LocationTrackingService.EXTRA_API_CALL_INTERVAL, interval)
         }
-        // For Android O (API 26) and above, use startForegroundService()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ContextCompat.startForegroundService(this, serviceIntent)
         } else {
             startService(serviceIntent)
         }
-        Toast.makeText(this, "Location tracking service started.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Location tracking service started with $interval ms interval.", Toast.LENGTH_SHORT).show()
     }
 
     private fun stopLocationService() {
