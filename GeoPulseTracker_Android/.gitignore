@@ -13,3 +13,44 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# General Android Studio / IntelliJ
+.gradle/
+/local.properties
+/.idea/
+*.iml
+*.iws
+
+# Build outputs
+/build/
+/captures/
+
+# APKs
+*.apk
+*.apks
+
+# Java/Kotlin
+*.class
+
+# Native
+*.so
+*.o
+
+# Packaging
+*.dex
+
+# Log files
+*.log
+
+# Gradle cache
+.gradle/
+
+# DS_Store (macOS)
+.DS_Store
+
+# Keystore files
+*.jks
+*.keystore
+
+#NDK
+/obj/
