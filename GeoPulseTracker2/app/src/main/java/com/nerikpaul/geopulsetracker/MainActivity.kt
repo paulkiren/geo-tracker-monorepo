@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +51,9 @@ fun TrackingButton(modifier: Modifier = Modifier) {
 
     Button(
         onClick = { isTracking = !isTracking },
-        modifier = modifier.padding(16.dp),
+        modifier = modifier
+            .padding(16.dp)
+            .fillMaxWidth(0.8f), // Adjust the fraction to control the width
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isTracking) Color.Green else Color.Gray,
             contentColor = Color.White
