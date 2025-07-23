@@ -24,7 +24,8 @@ interface ApiResponse {
 
 // Create an Express application
 const app: express.Application = express();
-const port: number = 3000;
+// const port: number = 3000;
+const port: number = parseInt(process.env.PORT || '3000', 10);
 
 // --- Temporary Storage ---
 // This array will hold the location data received.
