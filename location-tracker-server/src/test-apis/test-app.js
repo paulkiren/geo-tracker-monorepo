@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://location-tracker-server-production.up.railway.app';
 
 // Generate random coordinates (around San Francisco area)
 function generateRandomLocation() {
