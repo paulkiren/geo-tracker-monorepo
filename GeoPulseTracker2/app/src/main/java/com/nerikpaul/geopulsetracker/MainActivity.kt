@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.nerikpaul.geopulsetracker.ui.theme.GeoPulseTrackerTheme
 
@@ -29,7 +32,9 @@ class MainActivity : ComponentActivity() {
             GeoPulseTrackerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
-                        modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) { TrackingButton() }
@@ -45,9 +50,14 @@ fun TrackingButton(modifier: Modifier = Modifier) {
 
     Button(
         onClick = { isTracking = !isTracking },
-        modifier = modifier
+        modifier = modifier.padding(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isTracking) Color.Green else Color.Gray,
+            contentColor = Color.White
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
     ) {
-        Text(text = if (isTracking) "Turn Off Tracking" else "Track Me")
+        Text(text = if (isTracking) "Location Tracking ON" else "Turn ON Location Tracking")
     }
 }
 
@@ -57,7 +67,9 @@ fun TrackingButtonPreview() {
     GeoPulseTrackerTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Column(
-                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) { TrackingButton() }
