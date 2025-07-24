@@ -67,17 +67,23 @@ class LocationService(private val context: Context) {
                 )
                 
                 val response = ApiClient.locationService.sendLocation(
-                    AppConfig.AUTH_TOKEN, 
+                    "Bearer ${AppConfig.AUTH_TOKEN}", 
                     locationRequest
                 )
                 
                 if (response.isSuccessful) {
                     Log.d("LocationService", "Location sent successfully: ${location.latitude}, ${location.longitude}")
                 } else {
-                    Log.e("LocationService", "Failed to send location: ${response.code()}")
+                    Log.e("LocationService", "Failed to send location: ${response.code()} - ${response.message()}")
                 }
+            } catch (e: java.net.UnknownHostException) {
+                Log.e("LocationService", "Network error - unable to resolve host: ${e.message}")
+                Log.i("LocationService", "Check your internet connection and server URL in AppConfig")
+            } catch (e: java.io.IOException) {
+                Log.e("LocationService", "Network I/O error: ${e.message}")
             } catch (e: Exception) {
-                Log.e("LocationService", "Error sending location: ${e.message}")
+                Log.e("LocationService", "Unexpected error sending location: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

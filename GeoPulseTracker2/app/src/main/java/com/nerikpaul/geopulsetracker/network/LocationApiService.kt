@@ -9,7 +9,7 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface LocationApiService {
-    @POST("locations")
+    @POST("update-location")
     suspend fun sendLocation(
         @Header("Authorization") token: String,
         @Body location: LocationRequest
