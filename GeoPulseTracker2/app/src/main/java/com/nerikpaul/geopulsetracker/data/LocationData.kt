@@ -1,5 +1,8 @@
 package com.nerikpaul.geopulsetracker.data
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class LocationRequest(
     val latitude: Double,
     val longitude: Double,
@@ -8,6 +11,7 @@ data class LocationRequest(
     val timestamp: String
 )
 
+@JsonClass(generateAdapter = true)
 data class LocationResponse(
     val id: String,
     val latitude: Double,
@@ -18,6 +22,7 @@ data class LocationResponse(
     val userId: String
 )
 
+@JsonClass(generateAdapter = true)
 data class ApiResponse<T>(
     val success: Boolean,
     val data: T?,
