@@ -4,7 +4,8 @@ data class LocationRequest(
     val latitude: Double,
     val longitude: Double,
     val accuracy: Float? = null,
-    val address: String? = null
+    val address: String? = null,
+    val timestamp: String
 )
 
 data class LocationResponse(
